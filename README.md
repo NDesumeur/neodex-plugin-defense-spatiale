@@ -10,6 +10,8 @@ Un jeu de défense de tourelles : des vagues d'ennemis suivent une route vers ta
 - **Maj + clic** : en poser plusieurs à la suite.
 - **Clic sur une tourelle posée** : voir ses dégâts et sa portée, l'**améliorer** (**U**) ou la **vendre** (**V**, 70 % de ce qu'elle a coûté).
 - **Clic droit** ou **Échap** : annuler ; **Espace** : pause ; **Vitesse ×2** accélère le jeu.
+- **Entrée** : lancer la vague suivante ; **PLEIN ÉCRAN** : le jeu et ses tourelles sur tout l'écran.
+- La route a des bords qui luisent et des flèches dorées qui avancent dans le sens des ennemis, jusqu'à la station.
 - **Lancer la vague** : envoie la vague suivante sans attendre. Plus tu l'appelles tôt, plus tu gagnes de cristaux (2 par seconde d'avance).
 
 ## Les tourelles

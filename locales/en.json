@@ -1,6 +1,5 @@
 {
  "% aux tourelles proches": "% to nearby turrets",
- "1 à 9 : choisir une tourelle · Maj + clic : en poser plusieurs · clic sur une tourelle : l'améliorer (U) ou la vendre (V) · espace : pause · clic droit ou Échap : annuler.": "1 to 9: choose a turret · Shift + click: place several · click on a turret: improve it (U) or sell it (V) · space: pause · right click or Esc: cancel.",
  "Acide": "Acid",
  "Améliorer ·": "Improve ·",
  "Anneau": "Ring",
@@ -26,7 +25,6 @@
  "Double flux": "Dual flow",
  "Drone": "Drone",
  "DÉFENSE SPATIALE": "SPACE DEFENSE",
- "Défense de tourelles : place et améliore 9 tourelles (laser, plasma, givre, tesla, missiles, rail, acide, nova, relais) le long de la route pour arrêter des vagues d'ennemis qui éclatent, se blindent, se régénèrent ou ignorent le ralentissement, avec un vaisseau-mère toutes les 10 vagues. 30 cartes, 4 difficultés, une médaille à la vague 50, et des cristaux en bonus quand tu appelles la vague en avance.": "Tower defence: place and upgrade 9 towers (laser, plasma, frost, tesla, missiles, rail, acid, nova, relay) along the route to stop waves of enemies that split, armour up, regenerate or ignore slowing, with a mothership every 10 waves. 30 maps, 4 difficulties, a medal at wave 50, and bonus crystals when you call the wave early.",
  "Défense spatiale": "Space defense",
  "Dégâts": "Damage",
  "Escalier": "Stairs",
@@ -98,5 +96,8 @@
  "· VAISSEAU-MÈRE": "· MOTHERSHIP",
  "Éclair qui rebondit": "Bouncing lightning",
  "Éclaireur": "Scout",
- "Éclipse": "Eclipse"
+ "Éclipse": "Eclipse",
+ "Défense de tourelles : place et améliore 9 tourelles (laser, plasma, givre, tesla, missiles, rail, acide, nova, relais) le long de la route pour arrêter des vagues d'ennemis qui éclatent, se blindent, se régénèrent ou ignorent le ralentissement, avec un vaisseau-mère toutes les 10 vagues. 30 cartes, 4 difficultés, une médaille à la vague 50, et des cristaux en bonus quand tu appelles la vague en avance. Route lumineuse avec des flèches qui montrent le sens des ennemis, plein écran.": "Tower defence: place and upgrade 9 towers (laser, plasma, frost, tesla, missiles, rail, acid, nova, relay) along the route to stop waves of enemies that split, armour up, regenerate or ignore slowing, with a mothership every 10 waves. 30 maps, 4 difficulties, a medal at wave 50, and bonus crystals when you call the wave early. Glowing route with arrows showing which way the enemies go, fullscreen.",
+ "1 à 9 : choisir une tourelle · Maj + clic : en poser plusieurs · clic sur une tourelle : l'améliorer (U) ou la vendre (V) · Entrée : lancer la vague · espace : pause · clic droit ou Échap : annuler.": "1 to 9: choose a turret · Shift + click: place several · click on a turret: improve it (U) or sell it (V) · Enter: launch the wave · space: pause · right click or Esc: cancel.",
+ "PLEIN ÉCRAN": "FULLSCREEN"
 }

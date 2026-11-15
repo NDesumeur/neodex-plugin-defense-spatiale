@@ -1,7 +1,7 @@
 // Défense spatiale : ton appli d'origine (HTML et code inchangés), livrée en plugin.
 // Ses données sont dans le dossier du plugin, que NeoDex sauvegarde (synchro cloud et sauvegardes) ; à la première ouverture elle reprend ce que tu avais dans NeoDex.
 // Elle tourne dans le bac à sable de NeoDex, avec ses outils d'interface (ctx.host) et seulement les autorisations de son plugin.json.
-const HTML = "<div class=\"appWrap wide\">\n      <div class=\"agHead\"><span class=\"label\">Défense spatiale</span><span class=\"hint\" id=\"tdInfo\"></span><div class=\"agNav\"><select class=\"f gSel\" id=\"tdMap\"></select><select class=\"f gSel\" id=\"tdDiff\" title=\"Difficulté\"></select><button class=\"btn px\" id=\"tdNew\">NOUVELLE PARTIE</button></div></div>\n      <div class=\"gameBox g85\"><canvas id=\"tdCanvas\" width=\"384\" height=\"240\"></canvas></div>\n      <div class=\"tdBar\"><div id=\"tdTowers\"></div><div class=\"sysCard px\" id=\"tdSel\"></div><div class=\"tdCtl\"><button class=\"btn main px\" id=\"tdWaveBtn\">LANCER LA VAGUE 1</button><button class=\"btn px\" id=\"tdFast\">VITESSE ×1</button></div></div>\n      <div class=\"hint\">1 à 9 : choisir une tourelle · Maj + clic : en poser plusieurs · clic sur une tourelle : l'améliorer (U) ou la vendre (V) · espace : pause · clic droit ou Échap : annuler.</div>\n    </div>";
+const HTML = "<div class=\"appWrap wide\">\n      <div class=\"agHead\"><span class=\"label\">Défense spatiale</span><span class=\"hint\" id=\"tdInfo\"></span><div class=\"agNav\"><select class=\"f gSel\" id=\"tdMap\"></select><select class=\"f gSel\" id=\"tdDiff\" title=\"Difficulté\"></select><button class=\"btn px\" id=\"tdNew\">NOUVELLE PARTIE</button></div></div>\n      <div class=\"gameBox g85\"><canvas id=\"tdCanvas\" width=\"384\" height=\"240\"></canvas></div>\n      <div class=\"tdBar\"><div id=\"tdTowers\"></div><div class=\"sysCard px\" id=\"tdSel\"></div><div class=\"tdCtl\"><button class=\"btn main px\" id=\"tdWaveBtn\">LANCER LA VAGUE 1</button><button class=\"btn px\" id=\"tdFast\">VITESSE ×1</button><button class=\"btn px\" id=\"tdFs\">PLEIN ÉCRAN</button></div></div>\n      <div class=\"hint\">1 à 9 : choisir une tourelle · Maj + clic : en poser plusieurs · clic sur une tourelle : l'améliorer (U) ou la vendre (V) · Entrée : lancer la vague · espace : pause · clic droit ou Échap : annuler.</div>\n    </div>";
 /*CSS-MOVED*/ const CSS = `.gameBox{display:grid;place-items:center;padding:10px;background:#05010b;box-shadow:0 0 0 3px var(--line2)}
 .gameBox canvas{width:min(100%,1152px);aspect-ratio:384/144;image-rendering:pixelated;cursor:var(--cp,pointer)}
 .gameBox.tall canvas{width:auto;height:min(720px,72vh);aspect-ratio:240/320}
@@ -14,6 +14,9 @@ const HTML = "<div class=\"appWrap wide\">\n      <div class=\"agHead\"><span cl
 .tdTower small{font-size:12px;color:var(--lilac);font-weight:400}
 #tdSel{flex:1;min-width:240px}
 .tdCtl{display:flex;flex-direction:column;gap:10px}
+@media (max-height:760px){.tdTower small{display:none}.tdTower{padding:4px 10px;grid-template-rows:auto}.tdTower img{width:24px;height:24px;grid-row:auto}.tdCtl{flex-direction:row;flex-wrap:wrap}.gameBox.g85 canvas{width:min(100%,calc((100vh - 290px) * 1.6))}}
+.appWrap:fullscreen{background:#05010b;padding:12px 16px;overflow:auto;box-sizing:border-box}
+.appWrap:fullscreen .gameBox.g85 canvas{width:min(100%,calc((100vh - 230px) * 1.6))}
 `;  // le style de ce plugin (il utilise les variables du thème de NeoDex)
 export default async function (ctx) {
   const view = ctx.view;
@@ -156,6 +159,14 @@ function tdBuildMap(m) {  // pixel routes along the waypoints, and the tiles the
   for (let i = 0; i < 14; i++) { const c = Math.floor(rnd() * TD.COLS), r = 1 + Math.floor(rnd() * (TD.ROWS - 1)); if (!road.has(r * TD.COLS + c)) rocks.add(r * TD.COLS + c); }
   return {road, routes, rocks};
 }
+// le sens de la route à une distance d : un vecteur unité (les routes ne vont qu'en ligne droite, horizontale ou verticale)
+const tdDir = (route, d) => { const s = route.segs.find(s => d <= s.at + s.l) || route.segs.at(-1); return [Math.sign(s.b[0] - s.a[0]), Math.sign(s.b[1] - s.a[1])]; };
+function tdArrow(g, route, d) {  // un chevron de 2 pixels d'épaisseur, pointe vers l'avant
+  const [x, y] = tdPos(route, d), [ux, uy] = tdDir(route, d), a = Math.min(1, d / 24, (route.len - d) / 24);
+  g.globalAlpha = .25 + .55 * a;
+  for (let i = -3; i <= 3; i++) for (let t = 0; t < 2; t++) { const b = Math.abs(i) + t; px(g, t ? '#c88a20' : '#ffd07a', Math.round(x + ux * (2 - b) - uy * i), Math.round(y + uy * (2 - b) + ux * i)); }
+  g.globalAlpha = 1;
+}
 const tdPos = (route, d) => { const s = route.segs.find(s => d <= s.at + s.l) || route.segs.at(-1), k = Math.min(1, (d - s.at) / s.l); return [s.a[0] + (s.b[0] - s.a[0]) * k, s.a[1] + (s.b[1] - s.a[1]) * k]; };
 function tdStart(map = +$('tdMap').value) {
   if (!td && games?.tdPrefs?.diff) $('tdDiff').value = games.tdPrefs.diff;  // the difficulty chosen last time
@@ -296,12 +307,13 @@ function tdDraw() {
   g.fillStyle = '#060114'; g.fillRect(-4, -4, W + 8, H + 8);
   for (const [x, y, z] of td.stars) px(g, z > .8 ? '#8f7bb8' : z > .5 ? '#3a2a6e' : '#221844', (x + td.tick * z * .05) % W, y);
   for (const k of td.rocks) { const x = k % TD.COLS * T, y = Math.floor(k / TD.COLS) * T; px(g, '#130a20', x + 2, y + 3, 12, 10); px(g, '#2a1d52', x + 3, y + 3, 10, 8); px(g, '#3a2a6e', x + 4, y + 4, 4, 3); px(g, '#130a20', x + 8, y + 7, 3, 2); }
+  const glow = ['#9a6ae8', '#a876f0', '#b884f8', '#c894ff', '#b884f8', '#a876f0'][(td.tick >> 3) % 6];  // la bordure respire doucement
   for (const k of td.road) {
     const c = k % TD.COLS, r = Math.floor(k / TD.COLS); if (c < 0 || c >= TD.COLS || r < 0 || r >= TD.ROWS) continue;
     const x = c * T, y = r * T; px(g, '#1a1035', x, y, T, T); px(g, '#221644', x + 1, y + 1, T - 2, T - 2);
-    for (const [dc, dr, ex, ey, ew, eh] of [[0, -1, 0, 0, T, 1], [0, 1, 0, T - 1, T, 1], [-1, 0, 0, 0, 1, T], [1, 0, T - 1, 0, 1, T]]) if (!td.road.has((r + dr) * TD.COLS + c + dc) || c + dc < 0 || c + dc >= TD.COLS) px(g, '#5e4d85', x + ex, y + ey, ew, eh);
+    for (const [dc, dr, ex, ey, ew, eh] of [[0, -1, 0, 0, T, 1], [0, 1, 0, T - 1, T, 1], [-1, 0, 0, 0, 1, T], [1, 0, T - 1, 0, 1, T]]) if (!td.road.has((r + dr) * TD.COLS + c + dc) || c + dc < 0 || c + dc >= TD.COLS) { px(g, glow, x + ex, y + ey, ew, eh); px(g, '#3a2a6e', x + ex + (ew > 1 ? 0 : ex ? -1 : 1), y + ey + (eh > 1 ? 0 : ey ? -1 : 1), ew, eh); }
   }
-  for (const route of td.routes) for (let d = (td.tick * .5) % 24; d < route.len; d += 24) { const [x, y] = tdPos(route, d); px(g, 'rgba(138,92,240,.35)', x - 1, y - 1, 2, 2); }  // the flow of the route
+  for (const route of td.routes) for (let d = (td.tick * .4) % 32; d < route.len - 6; d += 32) tdArrow(g, route, d);  // le sens de la route
   for (const route of td.routes) { const [x, y] = route.segs[0].a, [sx, sy] = [Math.max(4, x), y]; px(g, '#ff5ad9', sx - 3, sy - 6, 2, 12); px(g, (td.tick >> 3) % 2 ? '#ff5ad9' : '#8a1a7a', sx - 1, sy - 5, 2, 10); }
   const end = td.routes[0].segs.at(-1).b, bx = Math.min(W - 10, end[0]), by = end[1];
   px(g, '#05010b', bx - 9, by - 9, 18, 18); px(g, '#4a3c86', bx - 8, by - 8, 16, 16); px(g, '#7fe0ee', bx - 5, by - 5, 10, 10); px(g, '#e0ffff', bx - 2, by - 2, 4, 4); px(g, (td.tick >> 4) % 2 ? '#ff4f6d' : '#8a1a2e', bx - 1, by - 8, 2, 2);
@@ -384,6 +396,17 @@ $('tdCanvas').onpointerdown = e => {
 };
 $('tdWaveBtn').onclick = () => tdCallWave();
 $('tdFast').onclick = () => { td.fast = !td.fast; tdUi(); };
+$('tdFs').onclick = () => { $('tdFs').blur(); try { if (document.fullscreenElement) document.exitFullscreen(); else view.querySelector('.appWrap').requestFullscreen?.().catch(() => {}); } catch {} };
+function tdCheck() {  // vérification : sur toutes les cartes, chaque bout de route a un sens net et la route finit sur la station
+  const bad = [];
+  TD_MAPS.forEach((m, i) => { const {routes} = tdBuildMap(i);
+    for (const r of routes) { if (r.segs.some(s => (s.b[0] !== s.a[0]) === (s.b[1] !== s.a[1]))) bad.push(m.name + ' : bout de route en biais');
+      const [x, y] = tdPos(r, r.len), e = r.segs.at(-1).b; if (Math.abs(x - e[0]) + Math.abs(y - e[1]) > .01) bad.push(m.name + ' : fin');
+      for (let d = 0; d < r.len; d += 7) { const [ux, uy] = tdDir(r, d); if (Math.abs(ux) + Math.abs(uy) !== 1) { bad.push(m.name + ' : sens'); break; } } } });
+  return bad.length ? bad.join(', ') : 'ok';
+}
+{ const c = tdCheck(); console.assert(c === 'ok', 'défense spatiale', c); }
+$('tdCanvas').__td = {st: () => td, check: tdCheck, TD};
 $('tdNew').onclick = () => tdStart();
 const tdMedals = i => Object.keys(TD_DIFFS).filter(d => (games?.best['td' + i + (d === 'normal' ? '' : d)] ?? 0) >= TD_LAST).length;
 const tdMapList = () => { const v = $('tdMap').value; $('tdMap').replaceChildren(...TD_MAPS.map((m, i) => { const n = tdMedals(i), o = el('option', '', (i + 1) + '. ' + m.name + (n ? ' ' + '★'.repeat(n) : '')); o.value = i; return o; })); if (v) $('tdMap').value = v; };
@@ -399,6 +422,7 @@ document.addEventListener('keydown', e => {
   if (view.classList.contains('on') && td) {
     if (k === ' ') { e.preventDefault(); if (td.mode === 'play') td.mode = 'pause'; else if (td.mode === 'pause' || td.mode === 'ready') td.mode = 'play'; }
     if (k === 'Escape') { td.place = null; td.sel = null; tdUi(); }
+    if (k === 'Enter' && td.mode !== 'over' && !$('tdWaveBtn').disabled) { e.preventDefault(); tdCallWave(); }
     if (/^[1-9]$/.test(k) && +k <= Object.keys(TD_TOWERS).length) { const t = Object.keys(TD_TOWERS)[+k - 1]; td.place = td.place === t ? null : t; td.sel = null; tdUi(); }
     if (k === 'u' && td.sel) { tdUpgrade(td.sel); tdUi(); }
     if (k === 'v' && td.sel) { tdSell(td.sel); tdUi(); }

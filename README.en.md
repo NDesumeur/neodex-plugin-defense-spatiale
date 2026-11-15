@@ -10,6 +10,8 @@ A tower defence game: waves of enemies follow a route to your station, and you p
 - **Shift + click**: place several in a row.
 - **Click a placed tower**: see its damage and range, **upgrade** it (**U**) or **sell** it (**V**, 70% of what it cost).
 - **Right-click** or **Escape**: cancel; **Space**: pause; **Speed ×2** speeds the game up.
+- **Enter**: launch the next wave; **FULLSCREEN**: the game and its towers over the whole screen.
+- The route has glowing edges and golden arrows moving the way the enemies go, up to the station.
 - **Launch the wave**: sends the next wave without waiting. The earlier you call it, the more crystals you earn (2 per second ahead).
 
 ## The towers
