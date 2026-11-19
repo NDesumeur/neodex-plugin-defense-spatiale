@@ -49,7 +49,6 @@
  "NOUVEAU RECORD !": "NEW RECORD!",
  "NOUVELLE PARTIE": "NEW GAME",
  "Niveau max": "Max level",
- "Niveaux réussis, étoiles.": "Passed levels, stars.",
  "Normal": "Normal",
  "Nouvelle partie : bouton en haut": "New part: button at the top",
  "Nova": "Nova",
@@ -102,5 +101,6 @@
  "PLEIN ÉCRAN": "FULLSCREEN",
  ": bout de route en biais": ": diagonal road end",
  "défense spatiale": "space defence",
- "Enter": "Enter"
+ "Enter": "Enter",
+ "Rien n'est synchronisé : tes records restent sur cet appareil.": "Nothing is synced: your records stay on this device."
 }
