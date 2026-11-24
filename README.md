@@ -8,7 +8,7 @@ Un jeu de défense de tourelles : des vagues d'ennemis suivent une route vers ta
 
 - **1 à 9** ou clic sur une tourelle de la liste : la choisir ; puis clic sur une case libre pour la construire.
 - **Maj + clic** : en poser plusieurs à la suite.
-- **Clic sur une tourelle posée** : voir ses dégâts et sa portée, l'**améliorer** (**U**) ou la **vendre** (**V**, 70 % de ce qu'elle a coûté).
+- **Clic sur une tourelle posée** : voir ses dégâts et sa portée, l'**améliorer** (**U**, ou **U** / **I** pour choisir la spécialisation du niveau 3) ou la **vendre** (**V**, 70 % de ce qu'elle a coûté).
 - **Clic droit** ou **Échap** : annuler ; **Espace** : pause ; **Vitesse ×2** accélère le jeu.
 - **Entrée** : lancer la vague suivante ; **PLEIN ÉCRAN** : le jeu et ses tourelles sur tout l'écran.
 - La route a des bords qui luisent et des flèches dorées qui avancent dans le sens des ennemis, jusqu'à la station.
@@ -26,7 +26,21 @@ Un jeu de défense de tourelles : des vagues d'ennemis suivent une route vers ta
 - **Nova** : brûle tout ce qui passe autour de lui.
 - **Relais** : ne tire pas, mais renforce les tourelles proches (+25 % de dégâts, jusqu'à plus au niveau 3).
 
-Chaque tourelle s'améliore deux fois : plus de dégâts, de portée et de cadence.
+Chaque tourelle s'améliore deux fois. Le niveau 2 donne plus de dégâts, de portée et de cadence ; au **niveau 3**, tu choisis **une des deux spécialisations**, et l'autre est perdue pour cette tourelle (bouton de gauche ou **U**, bouton de droite ou **I**) :
+
+| Tourelle | Spécialisation 1 | Spécialisation 2 |
+|---|---|---|
+| Laser | Rayon perçant : touche les 3 ennemis de tête | Laser rapide : tire trois fois plus vite |
+| Canon à plasma | Mortier lourd : énorme explosion, plus lente | Fragmentation : l'obus éclate en 4 petites bombes |
+| Givre | Zéro absolu : une impulsion sur trois gèle sur place | Grêle : moins de froid, beaucoup de dégâts |
+| Tesla | Tempête : l'éclair rebondit sur 10 ennemis | Surcharge : 3 cibles, dégâts énormes |
+| Missiles | Salve : 3 missiles sur 3 cibles | Ogive : un missile qui explose sur une zone |
+| Rail | Antimatière : tir dévastateur, plus lent | Rail jumeau : deux traits à chaque tir |
+| Acide | Corrosion : les ennemis touchés prennent +30 % de dégâts | Nuage toxique : grande zone empoisonnée |
+| Nova | Supernova : plus large et plus forte | Pulsar : brûle sans arrêt, de près |
+| Relais | Amplificateur : +90 % de dégâts autour | Accélérateur : les tourelles proches tirent bien plus vite |
+
+Une tourelle spécialisée porte un petit voyant (doré pour la 1re, cyan pour la 2e). Chaque tourelle compte les **dégâts qu'elle a infligés** (affichés quand on la clique), et la fin de partie dit quelle a été ta **meilleure tourelle**.
 
 ## Les ennemis
 

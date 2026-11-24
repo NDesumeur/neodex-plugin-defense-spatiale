@@ -13,6 +13,8 @@ const HTML = "<div class=\"appWrap wide\">\n      <div class=\"agHead\"><span cl
 .tdTower img{grid-row:span 2;width:32px;height:32px;image-rendering:pixelated}
 .tdTower small{font-size:12px;color:var(--lilac);font-weight:400}
 #tdSel{flex:1;min-width:240px}
+.tdBr{height:auto;padding:6px 12px;display:flex;flex-direction:column;align-items:flex-start;text-align:left}
+.tdBr small{font-size:12px;font-weight:400;opacity:.85}
 .tdCtl{display:flex;flex-direction:column;gap:10px}
 @media (max-height:760px){.tdTower small{display:none}.tdTower{padding:4px 10px;grid-template-rows:auto}.tdTower img{width:24px;height:24px;grid-row:auto}.tdCtl{flex-direction:row;flex-wrap:wrap}.gameBox.g85 canvas{width:min(100%,calc((100vh - 290px) * 1.6))}}
 .appWrap:fullscreen{background:#05010b;padding:12px 16px;overflow:auto;box-sizing:border-box}
@@ -112,6 +114,19 @@ const TD_TOWERS = {
   nova: {name: 'Nova', color: '#ff7a4f', desc: 'Brûle tout autour de lui', lv: [{cost: 110, range: 30, rate: 18, dmg: 12}, {cost: 120, range: 34, rate: 16, dmg: 22}, {cost: 200, range: 38, rate: 14, dmg: 40}]},
   relais: {name: 'Relais', color: '#c9a0ff', desc: 'Booste les tourelles proches', lv: [{cost: 100, range: 52, rate: 1, dmg: 0, buff: .25}, {cost: 110, range: 58, rate: 1, dmg: 0, buff: .4}, {cost: 180, range: 64, rate: 1, dmg: 0, buff: .6}]},
 };
+// le niveau 3 : deux spécialisations au choix, qui s'excluent (comme les voies d'amélioration des tower defense modernes)
+const TD_BRANCH = {
+  laser: [{name: 'Rayon perçant', desc: 'Traverse et touche les 3 ennemis de tête', s: {dmg: 26, rate: 11, pierce: 3}}, {name: 'Laser rapide', desc: 'Tire trois fois plus vite', s: {dmg: 14, rate: 4}}],
+  canon: [{name: 'Mortier lourd', desc: 'Énorme explosion, plus lente', s: {dmg: 150, splash: 38, rate: 70, range: 68}}, {name: 'Fragmentation', desc: 'L\'obus éclate en 4 petites bombes', s: {dmg: 70, splash: 26, frag: 4}}],
+  givre: [{name: 'Zéro absolu', desc: 'Une impulsion sur trois gèle sur place', s: {slow: .65, freeze: 3}}, {name: 'Grêle', desc: 'Moins de froid, beaucoup de dégâts', s: {dmg: 34, slow: .45, range: 54, rate: 22}}],
+  tesla: [{name: 'Tempête', desc: 'L\'éclair rebondit sur 10 ennemis', s: {dmg: 60, chain: 10}}, {name: 'Surcharge', desc: '3 cibles, mais des dégâts énormes', s: {dmg: 210, chain: 3, rate: 40}}],
+  missile: [{name: 'Salve', desc: '3 missiles sur 3 cibles à la fois', s: {dmg: 120, multi: 3}}, {name: 'Ogive', desc: 'Un missile qui explose sur une zone', s: {dmg: 300, splash: 30, rate: 76}}],
+  rail: [{name: 'Antimatière', desc: 'Un tir dévastateur, plus lent', s: {dmg: 560, rate: 120, range: 124}}, {name: 'Rail jumeau', desc: 'Deux traits à chaque tir', s: {dmg: 240, rate: 76, twin: true}}],
+  acide: [{name: 'Corrosion', desc: 'Les ennemis touchés prennent +30 % de dégâts', s: {dot: 18, shred: .3}}, {name: 'Nuage toxique', desc: 'Grande zone empoisonnée', s: {dmg: 16, splash: 42, dot: 14}}],
+  nova: [{name: 'Supernova', desc: 'Plus large et plus forte', s: {range: 48, dmg: 56, rate: 16}}, {name: 'Pulsar', desc: 'Brûle sans arrêt, de près', s: {dmg: 15, rate: 5}}],
+  relais: [{name: 'Amplificateur', desc: '+90 % de dégâts aux tourelles proches', s: {buff: .9}}, {name: 'Accélérateur', desc: 'Les tourelles proches tirent bien plus vite', s: {buff: .5, haste: true, range: 80}}],
+};
+const tdStats = t => t.lv === 2 && t.br != null ? {...TD_TOWERS[t.type].lv[2], ...TD_BRANCH[t.type][t.br].s} : TD_TOWERS[t.type].lv[t.lv];
 const TD_FOES = {
   drone: {name: 'Drone', hp: 30, spd: .55, gold: 5, size: 5, color: '#b46aee'},
   eclaireur: {name: 'Éclaireur', hp: 18, spd: 1, gold: 4, size: 4, color: '#7fe0ee'},
@@ -186,11 +201,13 @@ function tdCallWave() {
   td.spawnT = 0; td.banner = {text: td.wave % 10 === 0 ? 'VAGUE ' + td.wave + ' · VAISSEAU-MÈRE' : 'VAGUE ' + td.wave, t: 100};
   sfx('notify'); tdUi();
 }
-function tdDamage(e, dmg) {
-  const def = TD_FOES[e.type];
+function tdDamage(e, dmg, src) {
+  const def = TD_FOES[e.type], hp0 = e.hp + e.shield;
+  if (e.shredT > 0) dmg *= 1 + e.shred;  // rongé par l'acide de la branche Corrosion
   if (e.shield > 0) { const a = Math.min(e.shield, dmg); e.shield -= a; dmg -= a; }
   e.hit = 0;
   e.hp -= def.armor ? Math.max(dmg * .3, dmg - def.armor) : dmg;
+  if (src) src.dealt = (src.dealt || 0) + Math.max(0, hp0 - Math.max(0, e.hp) - e.shield);
   e.flash = 4;
 }
 function tdStep() {
@@ -202,7 +219,7 @@ function tdStep() {
   for (const e of td.foes) {
     const def = TD_FOES[e.type], route = td.routes[e.route];
     e.d += def.spd * TD_DIFFS[td.diff].spd * (e.slowT > 0 ? 1 - e.slowF : 1);
-    if (e.slowT > 0) e.slowT--; e.hit++; if (e.flash) e.flash--;
+    if (e.slowT > 0) e.slowT--; if (e.shredT > 0) e.shredT--; e.hit++; if (e.flash) e.flash--;
     if (e.poisT > 0) { e.poisT--; if (e.poisT % 15 === 0) { e.hp -= e.poisD; e.flash = 2; } }  // le poison ignore l'armure
     if (def.regen && e.hit > 30 && e.hp > 0) e.hp = Math.min(e.max, e.hp + e.max * def.regen);
     if (e.maxShield && e.hit > 90 && e.shield < e.maxShield) e.shield = Math.min(e.maxShield, e.shield + e.maxShield * .004);
@@ -215,32 +232,33 @@ function tdStep() {
   td.foes = td.foes.filter(e => !e.dead && !e.gone);
   for (const t of td.towers) {
     if (t.type === 'relais') continue;  // il ne tire pas : il booste les tourelles autour de lui
-    const s0 = TD_TOWERS[t.type].lv[t.lv]; if (t.cool > 0) { t.cool--; continue; }
-    const buff = td.towers.reduce((m, r) => r.type === 'relais' && Math.hypot(r.x - t.x, r.y - t.y) <= TD_TOWERS.relais.lv[r.lv].range ? Math.max(m, TD_TOWERS.relais.lv[r.lv].buff) : m, 0);
-    const s = buff ? {...s0, dmg: s0.dmg * (1 + buff), rate: Math.max(4, Math.round(s0.rate / (1 + buff * .5)))} : s0;
+    const s0 = tdStats(t); if (t.cool > 0) { t.cool--; continue; }
+    let buff = 0, haste = false; for (const r of td.towers) if (r.type === 'relais') { const rs = tdStats(r); if (Math.hypot(r.x - t.x, r.y - t.y) <= rs.range) { buff = Math.max(buff, rs.buff); haste ||= !!rs.haste; } }
+    const s = buff ? {...s0, dmg: s0.dmg * (1 + buff), rate: Math.max(3, Math.round(s0.rate / (1 + buff * (haste ? 1.2 : .5))))} : s0;
     const inRange = td.foes.filter(e => Math.hypot(e.x - t.x, e.y - t.y) <= s.range);
     if (!inRange.length) continue;
     t.cool = s.rate;
     const first = inRange.reduce((a, e) => e.d > a.d ? e : a);
-    if (t.type === 'laser') { tdDamage(first, s.dmg); td.fx.push({k: 'beam', x: t.x, y: t.y, tx: first.x, ty: first.y, t: 6, c: '#ff5ad9'}); t.aim = Math.atan2(first.y - t.y, first.x - t.x); }
-    if (t.type === 'canon') { td.shots.push({k: 'shell', x: t.x, y: t.y, tgt: first, tx: first.x, ty: first.y, dmg: s.dmg, splash: s.splash, spd: 2.6}); t.aim = Math.atan2(first.y - t.y, first.x - t.x); }
-    if (t.type === 'givre') { for (const e of inRange) { tdDamage(e, s.dmg); if (TD_FOES[e.type].noSlow) continue; e.slowF = e.slowT > 0 ? Math.max(e.slowF, s.slow) : s.slow; e.slowT = 60; } td.fx.push({k: 'ring', x: t.x, y: t.y, r: s.range, t: 14}); }
+    if (t.type === 'laser') { for (const e of s.pierce ? inRange.sort((a, b) => b.d - a.d).slice(0, s.pierce) : [first]) { tdDamage(e, s.dmg, t); td.fx.push({k: 'beam', x: t.x, y: t.y, tx: e.x, ty: e.y, t: 6, c: '#ff5ad9'}); } t.aim = Math.atan2(first.y - t.y, first.x - t.x); }
+    if (t.type === 'canon') { td.shots.push({k: 'shell', x: t.x, y: t.y, tgt: first, tx: first.x, ty: first.y, dmg: s.dmg, splash: s.splash, frag: s.frag, spd: 2.6, src: t}); t.aim = Math.atan2(first.y - t.y, first.x - t.x); }
+    if (t.type === 'givre') { const frz = s.freeze && (t.pulse = (t.pulse || 0) + 1) % s.freeze === 0; for (const e of inRange) { tdDamage(e, s.dmg, t); if (TD_FOES[e.type].noSlow) continue; const f = frz && e.type !== 'boss' ? .95 : s.slow; e.slowF = e.slowT > 0 ? Math.max(e.slowF, f) : f; e.slowT = frz ? 45 : 60; } td.fx.push({k: 'ring', x: t.x, y: t.y, r: s.range, t: frz ? 22 : 14, rgb: frz ? '224,255,255' : undefined}); }
     if (t.type === 'tesla') {
       let cur = inRange.reduce((a, e) => Math.hypot(e.x - t.x, e.y - t.y) < Math.hypot(a.x - t.x, a.y - t.y) ? e : a), from = [t.x, t.y], dmg = s.dmg; const hit = new Set();
       for (let i = 0; i < s.chain && cur; i++) {
-        tdDamage(cur, dmg); hit.add(cur); td.fx.push({k: 'bolt', x: from[0], y: from[1], tx: cur.x, ty: cur.y, t: 8});
+        tdDamage(cur, dmg, t); hit.add(cur); td.fx.push({k: 'bolt', x: from[0], y: from[1], tx: cur.x, ty: cur.y, t: 8});
         from = [cur.x, cur.y]; dmg *= .85;
         cur = td.foes.filter(e => !hit.has(e) && e.hp > 0 && Math.hypot(e.x - from[0], e.y - from[1]) < 40).sort((a, b) => Math.hypot(a.x - from[0], a.y - from[1]) - Math.hypot(b.x - from[0], b.y - from[1]))[0];
       }
     }
     if (t.type === 'rail') {  // un trait instantané : touche tous les ennemis alignés
-      const tgt = inRange.reduce((a, e) => e.hp + (e.shield || 0) > a.hp + (a.shield || 0) ? e : a), ang = Math.atan2(tgt.y - t.y, tgt.x - t.x), ux = Math.cos(ang), uy = Math.sin(ang), L = s.range + 20;
-      for (const e of td.foes) { const dx = e.x - t.x, dy = e.y - t.y, along = dx * ux + dy * uy; if (along > 0 && along <= L && Math.abs(dx * uy - dy * ux) <= TD_FOES[e.type].size + 2) tdDamage(e, s.dmg); }
-      td.fx.push({k: 'beam', x: t.x, y: t.y, tx: t.x + ux * L, ty: t.y + uy * L, t: 10, c: '#7fb8ff'}); t.aim = ang;
+      const byHp = inRange.slice().sort((a, b) => b.hp + (b.shield || 0) - a.hp - (a.shield || 0)), L = s.range + 20;  // Rail jumeau : un 2e trait vers la 2e cible la plus solide
+      for (const tgt of s.twin ? byHp.slice(0, 2) : byHp.slice(0, 1)) { const ang = Math.atan2(tgt.y - t.y, tgt.x - t.x), ux = Math.cos(ang), uy = Math.sin(ang);
+        for (const e of td.foes) { const dx = e.x - t.x, dy = e.y - t.y, along = dx * ux + dy * uy; if (along > 0 && along <= L && Math.abs(dx * uy - dy * ux) <= TD_FOES[e.type].size + 2) tdDamage(e, s.dmg, t); }
+        td.fx.push({k: 'beam', x: t.x, y: t.y, tx: t.x + ux * L, ty: t.y + uy * L, t: 10, c: '#7fb8ff'}); t.aim = ang; }
     }
-    if (t.type === 'acide') { td.shots.push({k: 'glob', x: t.x, y: t.y, tgt: first, tx: first.x, ty: first.y, dmg: s.dmg, splash: s.splash, dot: s.dot, spd: 2.2}); t.aim = Math.atan2(first.y - t.y, first.x - t.x); }
-    if (t.type === 'nova') { for (const e of inRange) tdDamage(e, s.dmg); td.fx.push({k: 'ring', x: t.x, y: t.y, r: s.range, t: 14, rgb: '255,122,79'}); }
-    if (t.type === 'missile') { const tough = inRange.reduce((a, e) => e.hp > a.hp ? e : a); td.shots.push({k: 'missile', x: t.x, y: t.y, tgt: tough, tx: tough.x, ty: tough.y, dmg: s.dmg, spd: 1.6, ang: -Math.PI / 2}); }
+    if (t.type === 'acide') { td.shots.push({k: 'glob', x: t.x, y: t.y, tgt: first, tx: first.x, ty: first.y, dmg: s.dmg, splash: s.splash, dot: s.dot, shred: s.shred, spd: 2.2, src: t}); t.aim = Math.atan2(first.y - t.y, first.x - t.x); }
+    if (t.type === 'nova') { for (const e of inRange) tdDamage(e, s.dmg, t); td.fx.push({k: 'ring', x: t.x, y: t.y, r: s.range, t: 14, rgb: '255,122,79'}); }
+    if (t.type === 'missile') { for (const tough of inRange.slice().sort((a, b) => b.hp - a.hp).slice(0, s.multi || 1)) td.shots.push({k: 'missile', x: t.x, y: t.y, tgt: tough, tx: tough.x, ty: tough.y, dmg: s.dmg, splash: s.splash, spd: 1.6, ang: -Math.PI / 2 + (Math.random() - .5), src: t}); }
   }
   for (const p of td.shots) {
     if (p.tgt && p.tgt.hp > 0 && !p.tgt.gone) { p.tx = p.tgt.x; p.ty = p.tgt.y; }
@@ -249,8 +267,9 @@ function tdStep() {
     else { p.x += dx / (d || 1) * Math.min(d, p.spd); p.y += dy / (d || 1) * Math.min(d, p.spd); }
     if (Math.hypot(p.tx - p.x, p.ty - p.y) < 3) {
       p.dead = true;
-      if (p.splash) { for (const e of td.foes) if (Math.hypot(e.x - p.tx, e.y - p.ty) <= p.splash) { tdDamage(e, p.dmg); if (p.dot) { e.poisT = 180; e.poisD = Math.max(e.poisD || 0, p.dot); } } td.fx.push({k: 'boom', x: p.tx, y: p.ty, r: p.splash, t: 12}); }
-      else if (p.tgt && p.tgt.hp > 0) { tdDamage(p.tgt, p.dmg); td.fx.push({k: 'boom', x: p.tx, y: p.ty, r: 8, t: 10}); }
+      if (p.splash) { for (const e of td.foes) if (Math.hypot(e.x - p.tx, e.y - p.ty) <= p.splash) { tdDamage(e, p.dmg, p.src); if (p.dot) { e.poisT = 180; e.poisD = Math.max(e.poisD || 0, p.dot); } if (p.shred) { e.shredT = 180; e.shred = p.shred; } } td.fx.push({k: 'boom', x: p.tx, y: p.ty, r: p.splash, t: 12}); }
+      else if (p.tgt && p.tgt.hp > 0) { tdDamage(p.tgt, p.dmg, p.src); td.fx.push({k: 'boom', x: p.tx, y: p.ty, r: 8, t: 10}); }
+      for (let i = 0; i < (p.frag || 0); i++) { const a = i / p.frag * Math.PI * 2 + .4, fx = p.tx + Math.cos(a) * 18, fy = p.ty + Math.sin(a) * 18; for (const e of td.foes) if (Math.hypot(e.x - fx, e.y - fy) <= 12) tdDamage(e, p.dmg * .4, p.src); td.fx.push({k: 'boom', x: fx, y: fy, r: 12, t: 10}); }
     }
   }
   td.shots = td.shots.filter(p => !p.dead);
@@ -270,7 +289,7 @@ function tdUpdate() {
   if (td.shake > 0) td.shake--;
   if (td.tick % 15 === 0) tdHud();
 }
-function tdTowerArt(g, type, lv, x, y, aim = -Math.PI / 2) {  // 14 x 14 turret centred on x, y
+function tdTowerArt(g, type, lv, x, y, aim = -Math.PI / 2, br) {  // 14 x 14 turret centred on x, y ; br : la branche du niveau 3
   const c = TD_TOWERS[type].color;
   px(g, '#05010b', x - 7, y - 7, 14, 14); px(g, '#2b2468', x - 6, y - 6, 12, 12); px(g, '#3a2a6e', x - 6, y - 6, 12, 2);
   px(g, '#130a20', x - 4, y - 4, 8, 8); px(g, c, x - 3, y - 3, 6, 6); px(g, 'rgba(255,255,255,.55)', x - 3, y - 3, 6, 1);
@@ -319,9 +338,9 @@ function tdDraw() {
   px(g, '#05010b', bx - 9, by - 9, 18, 18); px(g, '#4a3c86', bx - 8, by - 8, 16, 16); px(g, '#7fe0ee', bx - 5, by - 5, 10, 10); px(g, '#e0ffff', bx - 2, by - 2, 4, 4); px(g, (td.tick >> 4) % 2 ? '#ff4f6d' : '#8a1a2e', bx - 1, by - 8, 2, 2);
   const showGrid = td.place || td.sel;
   if (td.place) for (let c = 0; c < TD.COLS; c++) for (let r = 1; r < TD.ROWS; r++) if (tdFree(c, r)) px(g, 'rgba(142,232,160,.06)', c * T + 1, r * T + 1, T - 2, T - 2);
-  for (const t of td.towers) tdTowerArt(g, t.type, t.lv, t.x, t.y, t.aim);
+  for (const t of td.towers) { tdTowerArt(g, t.type, t.lv, t.x, t.y, t.aim, t.br); if (t.br != null) { px(g, t.br ? '#7fe0ee' : '#ffd07a', t.x + 4, t.y - 7, 3, 3); px(g, '#05010b', t.x + 4, t.y - 7, 3, 1); } }
   const sel = td.sel && td.towers.includes(td.sel) ? td.sel : null;
-  if (sel) { g.strokeStyle = 'rgba(255,208,122,.7)'; g.setLineDash([3, 3]); g.beginPath(); g.arc(sel.x, sel.y, TD_TOWERS[sel.type].lv[sel.lv].range, 0, Math.PI * 2); g.stroke(); g.setLineDash([]); px(g, '#ffd07a', sel.x - 8, sel.y - 8, 16, 1); px(g, '#ffd07a', sel.x - 8, sel.y + 7, 16, 1); }
+  if (sel) { g.strokeStyle = 'rgba(255,208,122,.7)'; g.setLineDash([3, 3]); g.beginPath(); g.arc(sel.x, sel.y, tdStats(sel).range, 0, Math.PI * 2); g.stroke(); g.setLineDash([]); px(g, '#ffd07a', sel.x - 8, sel.y - 8, 16, 1); px(g, '#ffd07a', sel.x - 8, sel.y + 7, 16, 1); }
   for (const e of td.foes) tdFoeArt(g, e);
   g.globalAlpha = 1;
   for (const p of td.shots) { if (p.k === 'missile') { px(g, '#e6fff4', p.x - 1, p.y - 1, 3, 3); px(g, '#ff9a3c', p.x - Math.cos(p.ang) * 3 - 1, p.y - Math.sin(p.ang) * 3 - 1, 2, 2); } else if (p.k === 'glob') { px(g, '#a4e04a', p.x - 2, p.y - 2, 4, 4); px(g, '#e8ffc0', p.x - 1, p.y - 1, 2, 2); } else { px(g, '#ffd07a', p.x - 2, p.y - 2, 4, 4); px(g, '#ffffff', p.x - 1, p.y - 1, 2, 2); } }
@@ -346,7 +365,7 @@ function tdDraw() {
   if (td.banner) gameText(g, W, [[td.banner.text, '#ff5ad9', 9]], H / 2);
   if (td.mode === 'ready') gameText(g, W, [['DÉFENSE SPATIALE', '#ff5ad9', 12], ['Place des tourelles le long de la route', '#d9c6ff'], ['puis lance la première vague', '#d9c6ff'], ['Record sur cette carte : vague ' + (games?.best[tdKey()] ?? 0), '#ffd07a']], H / 2 - 20);
   if (td.mode === 'pause') gameText(g, W, [['PAUSE', '#ffffff', 12], ['Espace : reprendre', '#d9c6ff']], H / 2);
-  if (td.mode === 'over') gameText(g, W, [['LA STATION EST TOMBÉE', '#ff4f6d', 10], ['Tu as tenu ' + (td.wave - 1) + ' vagues · ' + td.kills + ' ennemis détruits', '#ffffff'], [td.record ? 'NOUVEAU RECORD !' : 'Record : vague ' + (games?.best[tdKey()] ?? 0), '#ffd07a'], ['Nouvelle partie : bouton en haut', '#d9c6ff']], H / 2 - 14);
+  if (td.mode === 'over') gameText(g, W, [['LA STATION EST TOMBÉE', '#ff4f6d', 10], ['Tu as tenu ' + (td.wave - 1) + ' vagues · ' + td.kills + ' ennemis détruits', '#ffffff'], ...(() => { const b = td.towers.reduce((a, t) => (t.dealt || 0) > (a?.dealt || 0) ? t : a, null); return b ? [['Meilleure tourelle : ' + TD_TOWERS[b.type].name + (b.br != null ? ' (' + TD_BRANCH[b.type][b.br].name + ')' : '') + ' · ' + Math.round(b.dealt).toLocaleString('fr-FR') + ' dégâts', '#8ee8a0']] : []; })(), [td.record ? 'NOUVEAU RECORD !' : 'Record : vague ' + (games?.best[tdKey()] ?? 0), '#ffd07a'], ['Nouvelle partie : bouton en haut', '#d9c6ff']], H / 2 - 14);
   g.restore();
 }
 const tdFree = (c, r) => c >= 0 && c < TD.COLS && r >= 1 && r < TD.ROWS && !td.road.has(r * TD.COLS + c) && !td.rocks.has(r * TD.COLS + c) && !td.towers.some(t => t.c === c && t.r === r);
@@ -357,7 +376,10 @@ function tdBuild(type, c, r) {
   if (!tdFree(c, r) || td.gold < cost) return false;
   td.gold -= cost; const t = {type, lv: 0, c, r, x: c * TD.T + 8, y: r * TD.T + 8, cool: 0, aim: -Math.PI / 2}; td.towers.push(t); sfx('click'); return t;
 }
-function tdUpgrade(t) { const nx = TD_TOWERS[t.type].lv[t.lv + 1]; if (!nx || td.gold < nx.cost) return false; td.gold -= nx.cost; t.lv++; sfx('notify'); return true; }
+function tdUpgrade(t, br) {  // br : la branche choisie pour passer au niveau 3 (0 ou 1)
+  const nx = TD_TOWERS[t.type].lv[t.lv + 1]; if (!nx || td.gold < nx.cost || (t.lv === 1 && br !== 0 && br !== 1)) return false;
+  td.gold -= nx.cost; t.lv++; if (t.lv === 2) t.br = br; sfx('notify'); return true;
+}
 function tdSell(t) { td.gold += Math.floor(tdInvested(t) * .7); td.towers.splice(td.towers.indexOf(t), 1); td.sel = null; sfx('close'); }
 const tdIcon = type => { const c = document.createElement('canvas'); c.width = c.height = 16; tdTowerArt(c.getContext('2d'), type, 0, 8, 8); return c.toDataURL(); };
 let tdIcons = null;
@@ -372,11 +394,14 @@ function tdUi() {
   }));
   const t = td.sel && td.towers.includes(td.sel) ? td.sel : null, box = $('tdSel');
   if (t) {
-    const def = TD_TOWERS[t.type], s = def.lv[t.lv], nx = def.lv[t.lv + 1];
-    const up = el('button', 'btn main px', nx ? 'Améliorer · ' + nx.cost + ' ♦' : 'Niveau max'); up.disabled = !nx || td.gold < nx.cost; up.onclick = () => { tdUpgrade(t); tdUi(); };
+    const def = TD_TOWERS[t.type], s = tdStats(t), nx = def.lv[t.lv + 1], br = t.br != null ? TD_BRANCH[t.type][t.br] : null;
+    // au niveau 2, deux boutons : les deux spécialisations du niveau 3 (U ou I)
+    const ups = t.lv === 1 ? TD_BRANCH[t.type].map((b, i) => { const u = el('button', 'btn main px tdBr', (i ? 'I' : 'U') + ' · ' + b.name + ' · ' + nx.cost + ' ♦'); u.title = b.desc; u.append(el('small', '', b.desc)); u.disabled = td.gold < nx.cost; u.onclick = () => { tdUpgrade(t, i); tdUi(); }; return u; })
+      : [Object.assign(el('button', 'btn main px', nx ? 'Améliorer · ' + nx.cost + ' ♦' : 'Niveau max'), {disabled: !nx || td.gold < nx.cost, onclick: () => { tdUpgrade(t); tdUi(); }})];
+    const up = ups[0];
     const sell = el('button', 'btn del px', 'Vendre · ' + Math.floor(tdInvested(t) * .7) + ' ♦'); sell.onclick = () => { tdSell(t); tdUi(); };
-    box.replaceChildren(el('b', '', def.name + ' · niveau ' + (t.lv + 1)), el('span', 'hint', (s.dmg ? 'Dégâts ' + s.dmg + ' · ' : '') + 'portée ' + s.range + (s.buff ? ' · +' + Math.round(s.buff * 100) + ' % aux tourelles proches' : '') + (s.dot ? ' · poison ' + s.dot : '') + (s.splash ? ' · zone ' + s.splash : '') + (s.slow ? ' · ralentit ' + Math.round(s.slow * 100) + ' %' : '') + (s.chain ? ' · ' + s.chain + ' cibles' : '') + (s.buff ? '' : ' · ' + (60 / s.rate).toFixed(1) + ' tirs/s')), el('div', 'row', ''));
-    box.lastChild.append(up, sell);
+    box.replaceChildren(el('b', '', def.name + ' · niveau ' + (t.lv + 1) + (br ? ' · ' + br.name : '')), el('span', 'hint', (s.dmg ? 'Dégâts ' + s.dmg + ' · ' : '') + 'portée ' + s.range + (s.buff ? ' · +' + Math.round(s.buff * 100) + ' % aux tourelles proches' : '') + (s.dot ? ' · poison ' + s.dot : '') + (s.splash ? ' · zone ' + s.splash : '') + (s.slow ? ' · ralentit ' + Math.round(s.slow * 100) + ' %' : '') + (s.chain ? ' · ' + s.chain + ' cibles' : '') + (s.buff ? '' : ' · ' + (60 / s.rate).toFixed(1) + ' tirs/s')), el('div', 'row', ''));
+    box.lastChild.append(...ups, sell); box.insertBefore(el('span', 'hint', 'Dégâts infligés : ' + Math.round(t.dealt || 0).toLocaleString('fr-FR') + (s.pierce ? ' · perce ' + s.pierce + ' ennemis' : '') + (s.multi ? ' · ' + s.multi + ' missiles' : '') + (s.twin ? ' · deux traits' : '') + (s.frag ? ' · ' + s.frag + ' éclats' : '') + (s.freeze ? ' · gèle une fois sur ' + s.freeze : '') + (s.shred ? ' · +' + Math.round(s.shred * 100) + ' % de dégâts subis' : '') + (s.haste ? ' · cadence boostée' : '')), box.lastChild); void up;
   } else box.replaceChildren(el('span', 'hint', td.place ? 'Clique une case libre pour construire · clic droit ou Échap : annuler' : 'Choisis une tourelle puis une case libre, ou clique une tourelle pour l\'améliorer.'));
   $('tdWaveBtn').textContent = td.mode === 'over' ? 'PARTIE TERMINÉE' : td.queue.length || (td.foes.length && !td.next) ? 'VAGUE EN COURS' : td.wave ? 'VAGUE SUIVANTE (+' + Math.floor(Math.max(0, td.next) / 60) * 2 + ' ♦)' : 'LANCER LA VAGUE 1';
   $('tdWaveBtn').disabled = td.mode === 'over' || !!td.queue.length;
@@ -406,7 +431,7 @@ function tdCheck() {  // vérification : sur toutes les cartes, chaque bout de r
   return bad.length ? bad.join(', ') : 'ok';
 }
 { const c = tdCheck(); console.assert(c === 'ok', 'défense spatiale', c); }
-$('tdCanvas').__td = {st: () => td, check: tdCheck, TD};
+$('tdCanvas').__td = {st: () => td, check: tdCheck, TD, upgrade: tdUpgrade, stats: tdStats, build: tdBuild, BR: TD_BRANCH, ui: () => tdUi(), step: () => tdStep()};
 $('tdNew').onclick = () => tdStart();
 const tdMedals = i => Object.keys(TD_DIFFS).filter(d => (games?.best['td' + i + (d === 'normal' ? '' : d)] ?? 0) >= TD_LAST).length;
 const tdMapList = () => { const v = $('tdMap').value; $('tdMap').replaceChildren(...TD_MAPS.map((m, i) => { const n = tdMedals(i), o = el('option', '', (i + 1) + '. ' + m.name + (n ? ' ' + '★'.repeat(n) : '')); o.value = i; return o; })); if (v) $('tdMap').value = v; };
@@ -424,7 +449,8 @@ document.addEventListener('keydown', e => {
     if (k === 'Escape') { td.place = null; td.sel = null; tdUi(); }
     if (k === 'Enter' && td.mode !== 'over' && !$('tdWaveBtn').disabled) { e.preventDefault(); tdCallWave(); }
     if (/^[1-9]$/.test(k) && +k <= Object.keys(TD_TOWERS).length) { const t = Object.keys(TD_TOWERS)[+k - 1]; td.place = td.place === t ? null : t; td.sel = null; tdUi(); }
-    if (k === 'u' && td.sel) { tdUpgrade(td.sel); tdUi(); }
+    if (k === 'u' && td.sel) { tdUpgrade(td.sel, td.sel.lv === 1 ? 0 : undefined); tdUi(); }
+    if (k === 'i' && td.sel && td.sel.lv === 1) { tdUpgrade(td.sel, 1); tdUi(); }
     if (k === 'v' && td.sel) { tdSell(td.sel); tdUi(); }
   }
 });  // (non indenté : les textes sur plusieurs lignes restent exactement les tiens)

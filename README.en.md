@@ -8,7 +8,7 @@ A tower defence game: waves of enemies follow a route to your station, and you p
 
 - **1 to 9** or click a tower in the list: select it; then click a free cell to build it.
 - **Shift + click**: place several in a row.
-- **Click a placed tower**: see its damage and range, **upgrade** it (**U**) or **sell** it (**V**, 70% of what it cost).
+- **Click a placed tower**: see its damage and range, **upgrade** it (**U**, or **U** / **I** to pick the level 3 specialisation) or **sell** it (**V**, 70% of what it cost).
 - **Right-click** or **Escape**: cancel; **Space**: pause; **Speed ×2** speeds the game up.
 - **Enter**: launch the next wave; **FULLSCREEN**: the game and its towers over the whole screen.
 - The route has glowing edges and golden arrows moving the way the enemies go, up to the station.
@@ -26,7 +26,21 @@ A tower defence game: waves of enemies follow a route to your station, and you p
 - **Nova**: burns everything passing around it.
 - **Relay**: does not fire, but boosts nearby towers (+25% damage, more at level 3).
 
-Each tower can be upgraded twice: more damage, range and fire rate.
+Each tower can be upgraded twice. Level 2 gives more damage, range and fire rate; at **level 3** you pick **one of two specialisations**, and the other is lost for that tower (left button or **U**, right button or **I**):
+
+| Tower | Specialisation 1 | Specialisation 2 |
+|---|---|---|
+| Laser | Piercing beam: hits the 3 leading enemies | Rapid laser: fires three times faster |
+| Plasma cannon | Heavy mortar: huge explosion, slower | Fragmentation: the shell bursts into 4 small bombs |
+| Frost | Absolute zero: one pulse in three freezes in place | Hailstorm: less cold, much more damage |
+| Tesla | Storm: the lightning bounces over 10 enemies | Overload: 3 targets, huge damage |
+| Missiles | Salvo: 3 missiles at 3 targets | Warhead: a missile that explodes over an area |
+| Rail | Antimatter: devastating, slower shot | Twin rail: two beams with every shot |
+| Acid | Corrosion: enemies hit take +30% damage | Toxic cloud: a large poisoned area |
+| Nova | Supernova: wider and stronger | Pulsar: burns non-stop, up close |
+| Relay | Amplifier: +90% damage around it | Accelerator: nearby towers fire much faster |
+
+A specialised tower wears a small light (gold for the first, cyan for the second). Every tower counts the **damage it has dealt** (shown when you click it), and the end of the game tells you your **best tower**.
 
 ## The enemies
 
