@@ -1,9 +1,9 @@
 {
   "pluginId": "neodex.defensespatiale",
   "repo": "NDesumeur/neodex-plugin-defense-spatiale",
-  "version": "1.3.2",
-  "sha256": "cb5cfa9535cae56e2f0fde3a40d1551f9398e8df0723b38c31817eb1e082284b",
-  "approvedAt": "2026-11-19T23:26:42.251Z",
+  "version": "1.4.0",
+  "sha256": "19bdc96937fb03b5494ac7e245cc8e2ad1c7760a2445fda9d993e2137cd8b5fd",
+  "approvedAt": "2026-11-24T15:56:13.620Z",
   "neobase": ">=4.0.0",
-  "signature": "z0miDq0cupJ0eib4BWdrMnQV7xFsavdvdxzW6Egbd/+LalCDWRXVmB2+M0zcX6rU4IzRe3AYV2EO2DoWVo5zDQ=="
+  "signature": "WI9i4ISzgamzZ2nahErK/zugs4j7AWyCoJaAlLPreSovhAvxxS1WuYlVFShr/mH7Jvuj+MjkBtN38v2ZtvCJBQ=="
 }
