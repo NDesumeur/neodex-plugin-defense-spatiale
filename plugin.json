@@ -1,7 +1,7 @@
 {
   "id": "neodex.defensespatiale",
   "name": "Défense spatiale",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "author": "NDesumeur",
   "description": "Défense de tourelles : place et améliore 9 tourelles (laser, plasma, givre, tesla, missiles, rail, acide, nova, relais), chacune avec deux spécialisations au choix au niveau 3, le long de la route pour arrêter des vagues d'ennemis qui éclatent, se blindent, se régénèrent ou ignorent le ralentissement, avec un vaisseau-mère toutes les 10 vagues. 30 cartes, 4 difficultés, une médaille à la vague 50, et des cristaux en bonus quand tu appelles la vague en avance. Route lumineuse avec des flèches qui montrent le sens des ennemis, plein écran.",
   "icon": "icon.png",
@@ -22,5 +22,69 @@
   "sdk": "2.1.0",
   "permissions": [
     "storage"
+  ],
+  "succes": [
+    {
+      "id": "v10",
+      "nom": "Première ligne",
+      "texte": "Tenir 10 vagues"
+    },
+    {
+      "id": "v25",
+      "nom": "Bastion",
+      "texte": "Tenir 25 vagues"
+    },
+    {
+      "id": "victoire",
+      "nom": "Victoire !",
+      "texte": "Tenir les 50 vagues d'une carte"
+    },
+    {
+      "id": "difficile",
+      "nom": "Tourelles d'acier",
+      "texte": "Gagner une carte en Difficile"
+    },
+    {
+      "id": "cauchemar",
+      "nom": "Pas même un cauchemar",
+      "texte": "Gagner une carte en Cauchemar",
+      "cache": true
+    },
+    {
+      "id": "cartes10",
+      "nom": "Défenseur de la galaxie",
+      "texte": "Gagner 10 cartes différentes"
+    },
+    {
+      "id": "cartes",
+      "nom": "Toute la galaxie",
+      "texte": "Gagner les 30 cartes"
+    }
+  ],
+  "records": [
+    {
+      "id": "facile",
+      "nom": "Meilleure vague (facile)",
+      "sens": "haut",
+      "format": "nombre"
+    },
+    {
+      "id": "normal",
+      "nom": "Meilleure vague (normal)",
+      "sens": "haut",
+      "format": "nombre"
+    },
+    {
+      "id": "difficile",
+      "nom": "Meilleure vague (difficile)",
+      "sens": "haut",
+      "format": "nombre"
+    },
+    {
+      "id": "cauchemar",
+      "nom": "Meilleure vague (cauchemar)",
+      "sens": "haut",
+      "format": "nombre"
+    }
   ]
 }

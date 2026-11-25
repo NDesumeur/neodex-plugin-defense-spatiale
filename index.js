@@ -41,6 +41,9 @@ export default async function (ctx) {
   const saveGames = () => { clearTimeout(gamesTimer); gamesTimer = setTimeout(() => { gamesTimer = null; folder.write('games', games).catch(() => {}); }, 500); };
   const best = (k, v, higher = true) => { const b = games.best[k]; if (b == null || (higher ? v > b : v < b)) { games.best[k] = v; saveGames(); return true; } return false; };
   const gstore = (k, init) => (games[k] ??= init);  // la section d'un jeu
+  // les trophées de NeoDex (3.4.8 et plus) : succès et records déclarés dans plugin.json ; sur un NeoDex plus ancien, rien ne se passe
+  const trophy = id => { ctx.games?.unlock(id).catch(() => {}); };
+  const trophyRecord = (id, v) => { if (v != null && Number.isFinite(+v)) ctx.games?.record(id, +v).catch(() => {}); };
 function gameLoop(st, appKey, update, draw) {
   cancelAnimationFrame(st.raf);
   const STEP = 1000 / 60; let acc = 0, last = performance.now();
@@ -384,6 +387,7 @@ function tdSell(t) { td.gold += Math.floor(tdInvested(t) * .7); td.towers.splice
 const tdIcon = type => { const c = document.createElement('canvas'); c.width = c.height = 16; tdTowerArt(c.getContext('2d'), type, 0, 8, 8); return c.toDataURL(); };
 let tdIcons = null;
 function tdUi() {
+  setTimeout(tdTrophies);
   tdIcons ??= Object.fromEntries(Object.keys(TD_TOWERS).map(k => [k, tdIcon(k)]));
   $('tdTowers').replaceChildren(...Object.entries(TD_TOWERS).map(([k, t], i) => {
     const b = el('button', 'btn px tdTower' + (td.place === k ? ' main' : '')), img = el('img'); img.src = tdIcons[k];
@@ -455,5 +459,16 @@ document.addEventListener('keydown', e => {
   }
 });  // (non indenté : les textes sur plusieurs lignes restent exactement les tiens)
   // ---- fin ----
+  // les trophées, tirés des statistiques et des records gardés (aussi à l'ouverture : ce qui a été fait avant compte)
+  function tdTrophies() {
+    if (!games) return;
+    const w = (m, d) => games.best['td' + m + (d === 'normal' ? '' : d)] || 0, maps = TD_MAPS.map((M, m) => m), top = {};
+    for (const d of Object.keys(TD_DIFFS)) top[d] = Math.max(0, ...maps.map(m => w(m, d)));
+    const won = maps.filter(m => Object.keys(TD_DIFFS).some(d => w(m, d) >= TD_LAST)).length, sig = [...Object.values(top), won].join(); if (sig === tdTrophies.sig) return; tdTrophies.sig = sig;
+    for (const d of Object.keys(TD_DIFFS)) trophyRecord(d, top[d] || null);
+    const any = Math.max(...Object.values(top));
+    if (any >= 10) trophy('v10'); if (any >= 25) trophy('v25'); if (won >= 1) trophy('victoire');
+    if (top.difficile >= TD_LAST) trophy('difficile'); if (top.cauchemar >= TD_LAST) trophy('cauchemar'); if (won >= 10) trophy('cartes10'); if (won >= TD_MAPS.length) trophy('cartes');
+  }
   ctx.onOpen(() => { td ? (tdUi(), gameLoop(td, 'neodex:defense', tdUpdate, tdDraw)) : tdStart(); });
 }
